@@ -10,15 +10,28 @@ class Eps extends Model
 
     protected $fillable = [
         'nombre',
+        'nit',
         'direccion',
         'telefono',
         'email',
+        'sitio_web',
+        'representante_legal',
+        'telefono_representante',
+        'email_representante',
+        'tipo_eps',
+        'estado',
+        'fecha_afiliacion',
+        'total_afiliados',
+        'total_medicos',
+        'total_consultorios',
+        'calificacion',
+        'observaciones',
     ];
 
-    public function especialidades()
-    {
-        return $this->hasMany(Especialidades::class);
-    }
+    protected $casts = [
+        'fecha_afiliacion' => 'date',
+        'calificacion' => 'decimal:1',
+    ];
 
     public function pacientes()
     {

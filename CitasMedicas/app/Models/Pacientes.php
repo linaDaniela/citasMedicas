@@ -12,20 +12,50 @@ class Pacientes extends Model
     protected $fillable = [
         'nombre',
         'apellido',
-        'numero_documento',
+        'cedula',
         'fecha_nacimiento',
-        'email',
         'telefono',
-        'genero',
+        'email',
+        'direccion',
+        'eps_id',
+        'tipo_afiliacion',
+        'numero_afiliacion',
+        'grupo_sanguineo',
+        'alergias',
+        'medicamentos_actuales',
+        'contacto_emergencia_nombre',
+        'contacto_emergencia_telefono',
+        'estado',
     ];
+
+    protected $casts = [
+        'fecha_nacimiento' => 'date',
+    ];
+
+    protected $appends = ['edad'];
+
+    public function getEdadAttribute()
+    {
+        return $this->fecha_nacimiento ? $this->fecha_nacimiento->age : null;
+    }
+
+    public function eps()
+    {
+        return $this->belongsTo(Eps::class);
+    }
 
     public function citas()
     {
         return $this->hasMany(Citas::class);
     }
 
-    public function historiales()
+    public function historialMedico()
     {
-        return $this->hasMany(Historiales::class);
+        return $this->hasMany(HistorialMedico::class);
+    }
+
+    public function recetasMedicas()
+    {
+        return $this->hasMany(RecetasMedicas::class);
     }
 }

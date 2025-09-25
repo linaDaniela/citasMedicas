@@ -11,20 +11,11 @@ class Especialidades extends Model
     protected $fillable = [
         'nombre',
         'descripcion',
+        'estado',
     ];
 
     public function medicos()
     {
         return $this->hasMany(Medicos::class);
-    }
-
-    public function citas()
-    {
-        return $this->hasMany(Citas::class);
-    }
-
-    public function eps()
-    {
-        return $this->belongsTo(Eps::class);
     }
 }

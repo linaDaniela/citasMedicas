@@ -12,9 +12,16 @@ return new class extends Migration
             $table->id();
             $table->foreignId('paciente_id')->constrained('pacientes')->onDelete('cascade');
             $table->foreignId('medico_id')->constrained('medicos')->onDelete('cascade');
-            $table->foreignId('especialidad_id')->constrained('pacientes')->onDelete('cascade');
-            $table->dateTime('fecha_hora');
-            $table->enum('estado', ['Pendiente', 'Confirmada', 'Cancelada'])->default('Pendiente');
+            $table->unsignedBigInteger('consultorio_id')->nullable();
+            $table->date('fecha_cita');
+            $table->time('hora_cita');
+            $table->integer('duracion_minutos')->default(30);
+            $table->text('motivo');
+            $table->enum('estado', ['Programada', 'Completada', 'Cancelada', 'No Asistió'])->default('Programada');
+            $table->text('observaciones')->nullable();
+            $table->text('diagnostico')->nullable();
+            $table->text('tratamiento')->nullable();
+            $table->date('proxima_cita')->nullable();
             $table->timestamps();
         });
     }

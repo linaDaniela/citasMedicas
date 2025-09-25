@@ -11,8 +11,8 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('users', function (Blueprint $table) {
-            $table->string('role');
+        Schema::table('citas', function (Blueprint $table) {
+            $table->foreign('consultorio_id')->references('id')->on('consultorios')->onDelete('set null');
         });
     }
 
@@ -21,8 +21,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('users', function (Blueprint $table) {
-            $table->dropColumn('role');
+        Schema::table('citas', function (Blueprint $table) {
+            $table->dropForeign(['consultorio_id']);
         });
     }
 };

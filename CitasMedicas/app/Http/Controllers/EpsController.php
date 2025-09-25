@@ -17,10 +17,20 @@ class EpsController extends Controller
     public function store(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'nombre'    => 'required|string',
-            'direccion' => 'required|string',
-            'telefono'  => 'required|string',
-            'email'     => 'nullable|string',
+            'nombre' => 'required|string|max:150',
+            'nit' => 'required|string|max:20|unique:eps,nit',
+            'direccion' => 'nullable|string',
+            'telefono' => 'nullable|string|max:20',
+            'email' => 'nullable|email|max:150',
+            'sitio_web' => 'nullable|url|max:200',
+            'representante_legal' => 'nullable|string|max:150',
+            'telefono_representante' => 'nullable|string|max:20',
+            'email_representante' => 'nullable|email|max:150',
+            'tipo_eps' => 'required|in:Contributiva,Subsidiada,Mixta',
+            'estado' => 'nullable|in:Activa,Inactiva,Suspendida,En Proceso',
+            'fecha_afiliacion' => 'nullable|date',
+            'calificacion' => 'nullable|numeric|min:0|max:5',
+            'observaciones' => 'nullable|string',
         ]);
 
         if ($validator->fails()) {
@@ -30,7 +40,7 @@ class EpsController extends Controller
         $eps = Eps::create($validator->validated());
         $eps->refresh(); 
 
-        return response()->json($eps, 200);
+        return response()->json($eps, 201);
     }
 
     public function show(string $id)
@@ -53,10 +63,20 @@ class EpsController extends Controller
         }
 
         $validator = Validator::make($request->all(), [
-            'nombre'    => 'string',
-            'direccion' => 'string',
-            'telefono'  => 'string',
-            'email'     => 'string',
+            'nombre' => 'string|max:150',
+            'nit' => 'string|max:20|unique:eps,nit,' . $id,
+            'direccion' => 'nullable|string',
+            'telefono' => 'nullable|string|max:20',
+            'email' => 'nullable|email|max:150',
+            'sitio_web' => 'nullable|url|max:200',
+            'representante_legal' => 'nullable|string|max:150',
+            'telefono_representante' => 'nullable|string|max:20',
+            'email_representante' => 'nullable|email|max:150',
+            'tipo_eps' => 'in:Contributiva,Subsidiada,Mixta',
+            'estado' => 'in:Activa,Inactiva,Suspendida,En Proceso',
+            'fecha_afiliacion' => 'nullable|date',
+            'calificacion' => 'nullable|numeric|min:0|max:5',
+            'observaciones' => 'nullable|string',
         ]);
 
         if ($validator->fails()) {
