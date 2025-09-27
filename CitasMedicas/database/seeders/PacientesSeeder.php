@@ -5,6 +5,7 @@ namespace Database\Seeders;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use App\Models\Pacientes;
+use Illuminate\Support\Facades\Hash;
 
 class PacientesSeeder extends Seeder
 {
@@ -161,6 +162,11 @@ class PacientesSeeder extends Seeder
         ];
 
         foreach ($pacientes as $paciente) {
+            // Agregar campos de autenticación
+            $paciente['usuario'] = $paciente['email'];
+            $paciente['password'] = Hash::make('paciente123');
+            $paciente['estado_auth'] = 'activo';
+            
             Pacientes::create($paciente);
         }
     }

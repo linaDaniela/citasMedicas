@@ -5,6 +5,7 @@ namespace Database\Seeders;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use App\Models\Medicos;
+use Illuminate\Support\Facades\Hash;
 
 class MedicosSeeder extends Seeder
 {
@@ -29,6 +30,9 @@ class MedicosSeeder extends Seeder
                 'dias_trabajo' => 'lunes,martes,miercoles,jueves,viernes',
                 'tarifa_consulta' => 150000.00,
                 'estado' => 'activo',
+                'usuario' => 'wmorales',
+                'password' => Hash::make('medico123'),
+                'estado_auth' => 'activo',
             ],
             [
                 'nombre' => 'Andres',
@@ -45,6 +49,9 @@ class MedicosSeeder extends Seeder
                 'dias_trabajo' => 'lunes,martes,miercoles,jueves,viernes',
                 'tarifa_consulta' => 120000.00,
                 'estado' => 'activo',
+                'usuario' => 'asaavedra',
+                'password' => Hash::make('medico123'),
+                'estado_auth' => 'activo',
             ],
             [
                 'nombre' => 'Juan Pablo',
@@ -61,6 +68,9 @@ class MedicosSeeder extends Seeder
                 'dias_trabajo' => 'lunes,martes,miercoles,jueves,viernes',
                 'tarifa_consulta' => 180000.00,
                 'estado' => 'activo',
+                'usuario' => 'jbarrera',
+                'password' => Hash::make('medico123'),
+                'estado_auth' => 'activo',
             ],
             [
                 'nombre' => 'Valentina',
@@ -77,6 +87,9 @@ class MedicosSeeder extends Seeder
                 'dias_trabajo' => 'lunes,martes,miercoles,jueves,viernes',
                 'tarifa_consulta' => 160000.00,
                 'estado' => 'activo',
+                'usuario' => 'vcepeda',
+                'password' => Hash::make('medico123'),
+                'estado_auth' => 'activo',
             ],
             [
                 'nombre' => 'Maryuri',
@@ -93,6 +106,9 @@ class MedicosSeeder extends Seeder
                 'dias_trabajo' => 'lunes,martes,miercoles,jueves,viernes',
                 'tarifa_consulta' => 200000.00,
                 'estado' => 'activo',
+                'usuario' => 'mzorro',
+                'password' => Hash::make('medico123'),
+                'estado_auth' => 'activo',
             ],
             [
                 'nombre' => 'Carlos',
@@ -109,6 +125,9 @@ class MedicosSeeder extends Seeder
                 'dias_trabajo' => 'lunes,martes,miercoles,jueves,viernes',
                 'tarifa_consulta' => 140000.00,
                 'estado' => 'activo',
+                'usuario' => 'cgarcia',
+                'password' => Hash::make('medico123'),
+                'estado_auth' => 'activo',
             ],
             [
                 'nombre' => 'Ana',
@@ -125,6 +144,9 @@ class MedicosSeeder extends Seeder
                 'dias_trabajo' => 'lunes,martes,miercoles,jueves,viernes',
                 'tarifa_consulta' => 130000.00,
                 'estado' => 'activo',
+                'usuario' => 'amartinez',
+                'password' => Hash::make('medico123'),
+                'estado_auth' => 'activo',
             ],
             [
                 'nombre' => 'Luis',
@@ -141,6 +163,9 @@ class MedicosSeeder extends Seeder
                 'dias_trabajo' => 'lunes,martes,miercoles,jueves,viernes',
                 'tarifa_consulta' => 170000.00,
                 'estado' => 'activo',
+                'usuario' => 'lfernandez',
+                'password' => Hash::make('medico123'),
+                'estado_auth' => 'activo',
             ],
         ];
 
