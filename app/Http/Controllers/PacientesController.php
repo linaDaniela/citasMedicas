@@ -10,7 +10,8 @@ class PacientesController extends Controller
 {
     public function index()
     {
-        $pacientes = Pacientes::with(['citas', 'historiales'])->get();
+        // Eliminé las relaciones 'citas' y 'historiales' que no están definidas
+        $pacientes = Pacientes::all();
         return response()->json($pacientes);
     }
 
@@ -38,7 +39,8 @@ class PacientesController extends Controller
 
     public function show(string $id)
     {
-        $paciente = Pacientes::with(['citas', 'historiales'])->find($id);
+        // Eliminé las relaciones 'citas' y 'historiales' que no están definidas
+        $paciente = Pacientes::find($id);
 
         if (!$paciente) {
             return response()->json(['message' => 'Paciente no encontrado'], 404);

@@ -4,6 +4,9 @@ namespace App\Http\Middleware;
 
 use Closure;
 use Illuminate\Http\Request;
+use App\Models\Administrador;
+use App\Models\Medicos;
+use App\Models\Pacientes;
 
 class RoleMiddleware
 {
@@ -11,7 +14,21 @@ class RoleMiddleware
     {
         $user = $request->user();
 
-        if (! $user || ! in_array($user->role, $roles)) {
+        if (!$user) {
+            return response()->json(['error' => 'No autenticado'], 401);
+        }
+
+        // Determinar el rol basado en el tipo de modelo
+        $userRole = null;
+        if ($user instanceof Administrador) {
+            $userRole = 'administrador';
+        } elseif ($user instanceof Medicos) {
+            $userRole = 'medico';
+        } elseif ($user instanceof Pacientes) {
+            $userRole = 'paciente';
+        }
+
+        if (!$userRole || !in_array($userRole, $roles)) {
             return response()->json(['error' => 'No tienes permisos'], 403);
         }
 

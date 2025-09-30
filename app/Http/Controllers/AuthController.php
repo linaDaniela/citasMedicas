@@ -23,39 +23,73 @@ class AuthController extends Controller
 
             $user = null;
             $tipo = $request->tipo_usuario;
+            $email = $request->email;
 
-            Log::info('Intento de login', [
-                'email' => $request->email,
-                'tipo_usuario' => $tipo
+            Log::info('🔐 Intento de login', [
+                'email' => $email,
+                'tipo_usuario' => $tipo,
+                'timestamp' => now()
             ]);
 
             // Buscar usuario según el tipo (por email o usuario)
             switch ($tipo) {
                 case 'administrador':
-                    $user = Administrador::where(function($query) use ($request) {
-                        $query->where('email', $request->email)
-                              ->orWhere('usuario', $request->email);
+                    $user = Administrador::where(function($query) use ($email) {
+                        $query->where('email', $email)
+                              ->orWhere('usuario', $email);
                     })->where('estado', 'activo')->first();
                     break;
+                    
                 case 'medico':
-                    $user = Medicos::where(function($query) use ($request) {
-                        $query->where('email', $request->email)
-                              ->orWhere('usuario', $request->email);
-                    })->where('estado_auth', 'activo')->first();
+                    // Buscar por email primero
+                    $user = Medicos::where('email', $email)->first();
+                    
+                    // Si no encuentra por email, buscar por usuario
+                    if (!$user) {
+                        $user = Medicos::where('usuario', $email)->first();
+                    }
+                    
+                    // Si aún no encuentra, buscar por cualquier campo que contenga el email
+                    if (!$user) {
+                        $user = Medicos::where(function($query) use ($email) {
+                            $query->where('email', 'like', '%' . $email . '%')
+                                  ->orWhere('usuario', 'like', '%' . $email . '%')
+                                  ->orWhere('nombre', 'like', '%' . $email . '%');
+                        })->first();
+                    }
+                    
+                    // Verificar que esté activo
+                    if ($user && $user->estado_auth !== 'activo') {
+                        Log::warning('⚠️ Médico encontrado pero inactivo', [
+                            'email' => $email,
+                            'usuario' => $user->usuario,
+                            'estado_auth' => $user->estado_auth,
+                            'id' => $user->id
+                        ]);
+                        $user = null;
+                    }
                     break;
+                    
                 case 'paciente':
-                    $user = Pacientes::where(function($query) use ($request) {
-                        $query->where('email', $request->email)
-                              ->orWhere('usuario', $request->email);
+                    $user = Pacientes::where(function($query) use ($email) {
+                        $query->where('email', $email)
+                              ->orWhere('usuario', $email);
                     })->where('estado_auth', 'activo')->first();
                     break;
             }
 
             if (!$user) {
-                Log::warning('Usuario no encontrado', [
-                    'email' => $request->email,
+                Log::warning('❌ Usuario no encontrado', [
+                    'email' => $email,
                     'tipo_usuario' => $tipo
                 ]);
+                
+                // Para debugging, mostrar qué usuarios existen
+                if ($tipo === 'medico') {
+                    $medicosExistentes = Medicos::select('id', 'nombre', 'apellido', 'email', 'usuario', 'estado_auth')->get();
+                    Log::info('📋 Médicos existentes en BD:', $medicosExistentes->toArray());
+                }
+                
                 return response()->json([
                     'success' => false,
                     'message' => 'Usuario no encontrado o inactivo'
@@ -63,9 +97,10 @@ class AuthController extends Controller
             }
 
             if (!Hash::check($request->password, $user->password)) {
-                Log::warning('Contraseña incorrecta', [
-                    'email' => $request->email,
-                    'tipo_usuario' => $tipo
+                Log::warning('🔒 Contraseña incorrecta', [
+                    'email' => $email,
+                    'tipo_usuario' => $tipo,
+                    'user_id' => $user->id
                 ]);
                 return response()->json([
                     'success' => false,
@@ -75,33 +110,114 @@ class AuthController extends Controller
 
             $token = $user->createToken('auth_token')->plainTextToken;
 
-            Log::info('Login exitoso', [
+            Log::info('✅ Login exitoso', [
                 'user_id' => $user->id,
-                'tipo_usuario' => $tipo
+                'tipo_usuario' => $tipo,
+                'email' => $user->email,
+                'nombre' => $user->nombre . ' ' . $user->apellido
             ]);
+
+            // Preparar datos del usuario para el frontend
+            $userData = [
+                'id' => $user->id,
+                'nombre' => $user->nombre,
+                'apellido' => $user->apellido,
+                'email' => $user->email,
+                'telefono' => $user->telefono,
+                'usuario' => $user->usuario,
+                'role' => $tipo // Agregar 'role' para compatibilidad con frontend
+            ];
+
+            // Agregar datos específicos según el tipo
+            if ($tipo === 'medico') {
+                $userData['especialidad_id'] = $user->especialidad_id ?? null;
+                $userData['numero_tarjeta'] = $user->numero_tarjeta ?? null;
+            }
+
+            if ($tipo === 'paciente') {
+                $userData['eps_id'] = $user->eps_id ?? null;
+                $userData['cedula'] = $user->cedula ?? null;
+            }
 
             return response()->json([
                 'success' => true,
                 'message' => 'Login correcto',
-                'user' => $user,
+                'user' => $userData,
                 'tipo_usuario' => $tipo,
                 'token' => $token,
             ]);
 
         } catch (\Illuminate\Validation\ValidationException $e) {
+            Log::error('❌ Error de validación', [
+                'errors' => $e->errors(),
+                'email' => $request->email ?? 'N/A',
+                'tipo_usuario' => $request->tipo_usuario ?? 'N/A'
+            ]);
             return response()->json([
                 'success' => false,
                 'message' => 'Datos de validación incorrectos',
                 'errors' => $e->errors()
             ], 422);
         } catch (\Exception $e) {
-            Log::error('Error en login', [
+            Log::error('❌ Error inesperado en login', [
                 'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
+                'trace' => $e->getTraceAsString(),
+                'email' => $request->email ?? 'N/A',
+                'tipo_usuario' => $request->tipo_usuario ?? 'N/A'
             ]);
             return response()->json([
                 'success' => false,
                 'message' => 'Error interno del servidor'
+            ], 500);
+        }
+    }
+
+    // Método para debugging - ver médicos existentes
+    public function debugMedicos()
+    {
+        try {
+            $medicos = Medicos::select('id', 'nombre', 'apellido', 'email', 'usuario', 'estado_auth', 'estado')->get();
+            
+            Log::info('🔍 Debug médicos - Total encontrados:', ['count' => $medicos->count()]);
+            
+            return response()->json([
+                'success' => true,
+                'total' => $medicos->count(),
+                'medicos' => $medicos
+            ]);
+        } catch (\Exception $e) {
+            Log::error('❌ Error en debug médicos', [
+                'error' => $e->getMessage()
+            ]);
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al obtener médicos',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    // Método para debugging - ver administradores existentes
+    public function debugAdmins()
+    {
+        try {
+            $admins = Administrador::select('id', 'nombre', 'apellido', 'email', 'usuario', 'estado')->get();
+            
+            Log::info('🔍 Debug administradores - Total encontrados:', ['count' => $admins->count()]);
+            
+            return response()->json([
+                'success' => true,
+                'total' => $admins->count(),
+                'administradores' => $admins
+            ]);
+        } catch (\Exception $e) {
+            Log::error('❌ Error en debug administradores', [
+                'error' => $e->getMessage()
+            ]);
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al obtener administradores',
+                'error' => $e->getMessage()
             ], 500);
         }
     }
@@ -156,7 +272,7 @@ class AuthController extends Controller
 
             $token = $paciente->createToken('auth_token')->plainTextToken;
 
-            Log::info('Paciente registrado exitosamente', [
+            Log::info('✅ Paciente registrado exitosamente', [
                 'paciente_id' => $paciente->id,
                 'email' => $paciente->email
             ]);
@@ -176,7 +292,7 @@ class AuthController extends Controller
                 'errors' => $e->errors()
             ], 422);
         } catch (\Exception $e) {
-            Log::error('Error en registro de paciente', [
+            Log::error('❌ Error en registro de paciente', [
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
             ]);
@@ -229,7 +345,7 @@ class AuthController extends Controller
                 'estado_auth' => 'activo',
             ]);
 
-            Log::info('Médico creado exitosamente', [
+            Log::info('✅ Médico creado exitosamente', [
                 'medico_id' => $medico->id,
                 'email' => $medico->email
             ]);
@@ -247,7 +363,7 @@ class AuthController extends Controller
                 'errors' => $e->errors()
             ], 422);
         } catch (\Exception $e) {
-            Log::error('Error en creación de médico', [
+            Log::error('❌ Error en creación de médico', [
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
             ]);
@@ -281,7 +397,7 @@ class AuthController extends Controller
                 'estado' => 'activo',
             ]);
 
-            Log::info('Administrador creado exitosamente', [
+            Log::info('✅ Administrador creado exitosamente', [
                 'admin_id' => $admin->id,
                 'email' => $admin->email
             ]);
@@ -299,7 +415,7 @@ class AuthController extends Controller
                 'errors' => $e->errors()
             ], 422);
         } catch (\Exception $e) {
-            Log::error('Error en creación de administrador', [
+            Log::error('❌ Error en creación de administrador', [
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
             ]);
@@ -340,7 +456,7 @@ class AuthController extends Controller
             ]);
 
         } catch (\Exception $e) {
-            Log::error('Error en me()', [
+            Log::error('❌ Error en me()', [
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
             ]);
@@ -360,7 +476,7 @@ class AuthController extends Controller
             if ($user) {
                 $user->currentAccessToken()->delete();
                 
-                Log::info('Logout exitoso', [
+                Log::info('✅ Logout exitoso', [
                     'user_id' => $user->id
                 ]);
             }
@@ -371,7 +487,7 @@ class AuthController extends Controller
             ]);
 
         } catch (\Exception $e) {
-            Log::error('Error en logout', [
+            Log::error('❌ Error en logout', [
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
             ]);
